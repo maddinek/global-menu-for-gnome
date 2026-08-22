@@ -4,7 +4,8 @@
 set -euo pipefail
 
 SSH_HOST="${BLUEFIN_SSH:-vm-bluefin}"
-ICON_SIZE="${DOCK_ICON_SIZE:-36}"       # 75% of default 48px
+ICON_SIZE="${DOCK_ICON_SIZE:-27}"           # slim: 75% of prior 36px (originally 48)
+HEIGHT_FRACTION="${DOCK_HEIGHT_FRACTION:-0.68}"  # 75% of default 0.9 vertical span
 MONITOR="${DOCK_MONITOR:-primary}"      # connector name or 'primary'
 DOCK_POSITION="${DOCK_POSITION:-RIGHT}" # TOP, RIGHT, BOTTOM, or LEFT
 
@@ -23,13 +24,14 @@ else
 fi
 
 echo "==> Configuring Dash to Dock on ${SSH_TARGET}"
-echo "    position: ${DOCK_POSITION}, icon size: ${ICON_SIZE}px, monitor: ${MONITOR}"
+echo "    position: ${DOCK_POSITION}, icon size: ${ICON_SIZE}px, height: ${HEIGHT_FRACTION}, monitor: ${MONITOR}"
 
-ssh "${SSH_OPTS[@]}" "$SSH_TARGET" bash -s -- "$ICON_SIZE" "$MONITOR" "$DOCK_POSITION" <<'REMOTE'
+ssh "${SSH_OPTS[@]}" "$SSH_TARGET" bash -s -- "$ICON_SIZE" "$HEIGHT_FRACTION" "$MONITOR" "$DOCK_POSITION" <<'REMOTE'
 set -euo pipefail
 ICON_SIZE="$1"
-MONITOR="$2"
-POSITION="$3"
+HEIGHT_FRACTION="$2"
+MONITOR="$3"
+POSITION="$4"
 export DBUS_SESSION_BUS_ADDRESS="unix:path=/run/user/$(id -u)/bus"
 export GSETTINGS_SCHEMA_DIR="/usr/share/gnome-shell/extensions/dash-to-dock@micxgx.gmail.com/schemas"
 SCHEMA=org.gnome.shell.extensions.dash-to-dock
@@ -40,11 +42,13 @@ gsettings set "$SCHEMA" dock-fixed true
 gsettings set "$SCHEMA" intellihide false
 gsettings set "$SCHEMA" extend-height false
 gsettings set "$SCHEMA" dash-max-icon-size "$ICON_SIZE"
+gsettings set "$SCHEMA" height-fraction "$HEIGHT_FRACTION"
+gsettings set "$SCHEMA" custom-theme-shrink true
 gsettings set "$SCHEMA" preferred-monitor-by-connector "$MONITOR"
 gsettings set "$SCHEMA" multi-monitor false
 
 echo "Dash to Dock settings:"
-gsettings list-recursively "$SCHEMA" | grep -E 'autohide|dock-fixed|intellihide|dash-max-icon|dock-position|preferred-monitor|extend-height'
+gsettings list-recursively "$SCHEMA" | grep -E 'autohide|dock-fixed|intellihide|dash-max-icon|height-fraction|custom-theme-shrink|dock-position|preferred-monitor|extend-height'
 REMOTE
 
 echo "==> Done. Dock should stay visible on the ${DOCK_POSITION} edge of the ${MONITOR} display."
