@@ -3,7 +3,6 @@
 #panel.globalmenu-macos-panel {
   font-size: 13px;
   font-weight: 400;
-  position: relative;
 }
 
 /* Menu titles: File, Edit, View, … */
@@ -29,14 +28,10 @@
   icon-size: 14px;
 }
 
-/* Center clock in the bar */
+/* Clock at far right; status icons sit to its left (GNOME default order) */
 #panel.globalmenu-macos-panel #clock {
-  position: absolute;
-  left: 50%;
-  top: 0;
-  height: 100%;
-  transform: translateX(-50%);
-  z-index: 1;
+  margin-left: 6px;
+  padding-right: 4px;
 }
 
 #panel.globalmenu-macos-panel .clock-display {
