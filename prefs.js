@@ -73,9 +73,9 @@ export default class GlobalMenuPreferences extends ExtensionPreferences {
         settings.bind('show-app-grid', appGridRow, 'active', Gio.SettingsBindFlags.DEFAULT);
 
         this._addCommandRow(itemsGroup, settings, 'Software Center', 'show-software-center', 'software-center-command',
-            ['gnome-software', 'plasma-discover', 'pamac-manager', 'snap-store']);
+            ['flatpak run io.github.kolunmi.Bazaar', 'gnome-software', 'plasma-discover', 'pamac-manager', 'snap-store']);
         this._addCommandRow(itemsGroup, settings, 'System Monitor', 'show-system-monitor', 'system-monitor-command',
-            ['gnome-system-monitor', 'resources', 'ksysguard', 'xfce4-taskmanager']);
+            ['missioncenter-helper', 'gnome-system-monitor', 'resources', 'ksysguard', 'xfce4-taskmanager']);
         this._addCommandRow(itemsGroup, settings, 'Terminal', 'show-terminal', 'terminal-command',
             ['ptyxis', 'gnome-terminal', 'kgx', 'konsole', 'kitty', 'alacritty', 'tilix', 'terminator', 'xterm']);
 
@@ -84,8 +84,8 @@ export default class GlobalMenuPreferences extends ExtensionPreferences {
         settings.bind('show-extensions-app', extRow, 'active', Gio.SettingsBindFlags.DEFAULT);
 
         const EXTENSIONS_APPS = [
-            ['org.gnome.Extensions.desktop', 'GNOME Extensions'],
             ['com.mattjakeman.ExtensionManager.desktop', 'Extension Manager'],
+            ['org.gnome.Extensions.desktop', 'GNOME Extensions'],
         ];
         const extAppModel = Gtk.StringList.new(EXTENSIONS_APPS.map(([, label]) => label));
         const currentAppId = settings.get_string('extensions-app-id');

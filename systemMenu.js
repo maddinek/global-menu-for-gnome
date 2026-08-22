@@ -34,8 +34,8 @@ function findAvailableCommand(preferred, fallbacks) {
 }
 
 const TERMINAL_FALLBACKS = ['ptyxis', 'gnome-terminal', 'kgx', 'konsole', 'kitty', 'alacritty', 'tilix', 'terminator', 'xterm'];
-const SOFTWARE_CENTER_FALLBACKS = ['gnome-software', 'plasma-discover', 'pamac-manager', 'snap-store'];
-const SYSTEM_MONITOR_FALLBACKS = ['gnome-system-monitor', 'resources', 'ksysguard', 'xfce4-taskmanager'];
+const SOFTWARE_CENTER_FALLBACKS = ['flatpak run io.github.kolunmi.Bazaar', 'gnome-software', 'plasma-discover', 'pamac-manager', 'snap-store'];
+const SYSTEM_MONITOR_FALLBACKS = ['missioncenter-helper', 'gnome-system-monitor', 'resources', 'ksysguard', 'xfce4-taskmanager'];
 
 export const SystemMenuButton = GObject.registerClass(
   class SystemMenuButton extends PanelMenu.Button {

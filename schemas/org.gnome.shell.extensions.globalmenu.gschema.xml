@@ -42,18 +42,18 @@
       <summary>Icon size in pixels for the System Menu button</summary>
     </key>
 
-    <key name="hide-overview-button" type="b"><default>false</default><summary>Hide the Activities/overview button</summary></key>
+    <key name="hide-overview-button" type="b"><default>true</default><summary>Hide the Activities/overview button</summary></key>
 
     <key name="show-app-grid" type="b"><default>true</default><summary>Show App Grid item in System Menu</summary></key>
     <key name="show-software-center" type="b"><default>true</default><summary>Show Software Center item</summary></key>
-    <key name="software-center-command" type="s"><default>"gnome-software"</default><summary>Command for Software Center</summary></key>
+    <key name="software-center-command" type="s"><default>"flatpak run io.github.kolunmi.Bazaar"</default><summary>Command for Software Center</summary></key>
     <key name="show-system-monitor" type="b"><default>true</default><summary>Show System Monitor item</summary></key>
-    <key name="system-monitor-command" type="s"><default>"gnome-system-monitor"</default><summary>Command for System Monitor</summary></key>
+    <key name="system-monitor-command" type="s"><default>"missioncenter-helper"</default><summary>Command for System Monitor</summary></key>
     <key name="show-terminal" type="b"><default>true</default><summary>Show Terminal item</summary></key>
     <key name="terminal-command" type="s"><default>"ptyxis"</default><summary>Command for Terminal</summary></key>
     <key name="show-extensions-app" type="b"><default>true</default><summary>Show Extensions item</summary></key>
     <key name="extensions-app-id" type="s">
-      <default>"org.gnome.Extensions.desktop"</default>
+      <default>"com.mattjakeman.ExtensionManager.desktop"</default>
       <summary>Desktop file ID of the extensions manager app to launch</summary>
       <description>e.g. "org.gnome.Extensions.desktop" or "com.mattjakeman.ExtensionManager.desktop"</description>
     </key>
