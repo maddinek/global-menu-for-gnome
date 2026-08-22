@@ -642,9 +642,43 @@ export class MenuManager {
             });
     }
 
+    // Panel roles we claimed but no longer track. If an earlier manager
+    // instance was dropped without clearing — a disable/enable race, or an
+    // enable() that threw part-way through building the bar — its buttons stay
+    // parented to the panel while our _buttons array is empty. Those actors
+    // can then never be removed, and the role name stays taken so the next
+    // addToStatusArea() for it throws. Sweeping by role keeps clear() the
+    // single source of truth.
+    _sweepOrphanedRoles() {
+        let prefix = `${this.uuid}-`;
+        for (let role of Object.keys(Main.panel.statusArea)) {
+            if (!role.startsWith(prefix))
+                continue;
+
+            let indicator = Main.panel.statusArea[role];
+            if (this._buttons.includes(indicator))
+                continue;
+
+            try {
+                indicator.destroy();
+            } catch (e) {
+                logError(`Failed to destroy orphaned menu button ${role}: ${e}`);
+            }
+            delete Main.panel.statusArea[role];
+        }
+    }
+
     clear() {
-        this._buttons.forEach(btn => btn.destroy());
+        // One button throwing must not strand the rest on the panel.
+        this._buttons.forEach(btn => {
+            try {
+                btn.destroy();
+            } catch (e) {
+                logError(`Failed to destroy menu button: ${e}`);
+            }
+        });
         this._buttons = [];
+        this._sweepOrphanedRoles();
     }
 
     destroy() {
