@@ -46,6 +46,8 @@ bash uninstall.sh
 - Multiple independent custom top-level menus, each with shell-command or keyboard-shortcut items
 - Bundled distro/Apple icon picker for the System Menu button
 - Optional hiding of the Activities button
+- Dock page for driving [Dash to Dock](https://extensions.gnome.org/extension/307/dash-to-dock/) from the same
+  window: screen edge, icon size, length, whether it hides behind windows, and which display it appears on
 
 ## License
 

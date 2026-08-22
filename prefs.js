@@ -1,9 +1,55 @@
 import Adw from 'gi://Adw';
+import Gdk from 'gi://Gdk';
 import Gio from 'gi://Gio';
 import Gtk from 'gi://Gtk';
 import GLib from 'gi://GLib';
 
 import { ExtensionPreferences } from 'resource:///org/gnome/Shell/Extensions/js/extensions/prefs.js';
+
+// The dock itself is Dash to Dock; these pages only drive its settings so the
+// whole macOS-style desktop can be configured from one window.
+const DASH_TO_DOCK_UUID = 'dash-to-dock@micxgx.gmail.com';
+const DASH_TO_DOCK_SCHEMA = 'org.gnome.shell.extensions.dash-to-dock';
+
+const DOCK_POSITIONS = [
+    ['LEFT', 'Left'],
+    ['BOTTOM', 'Bottom'],
+    ['RIGHT', 'Right'],
+    ['TOP', 'Top'],
+];
+
+// Dash to Dock spreads visibility across three booleans plus a mode enum.
+// Collapse the combinations people actually want into single choices.
+const DOCK_VISIBILITY = [
+    {
+        title: 'Always Visible',
+        subtitle: 'The dock keeps its own space and windows never cover it',
+        apply: dock => {
+            dock.set_boolean('dock-fixed', true);
+            dock.set_boolean('autohide', false);
+            dock.set_boolean('intellihide', false);
+        },
+    },
+    {
+        title: 'Hide When a Window Is in the Way',
+        subtitle: 'Visible on an empty desktop, hidden as soon as a window overlaps it',
+        apply: dock => {
+            dock.set_boolean('dock-fixed', false);
+            dock.set_boolean('autohide', true);
+            dock.set_boolean('intellihide', true);
+            dock.set_string('intellihide-mode', 'ALL_WINDOWS');
+        },
+    },
+    {
+        title: 'Hide Until Pointed At',
+        subtitle: 'Always hidden; slides out when the pointer reaches the screen edge',
+        apply: dock => {
+            dock.set_boolean('dock-fixed', false);
+            dock.set_boolean('autohide', true);
+            dock.set_boolean('intellihide', false);
+        },
+    },
+];
 
 const DISTRO_ICONS = [
     ['pear', 'Bitten Pear'],
@@ -29,9 +75,218 @@ export default class GlobalMenuPreferences extends ExtensionPreferences {
         window.add(this._buildGeneralPage(settings, window));
         window.add(this._buildMenusPage(settings));
         window.add(this._buildCustomMenuPage(settings));
+        window.add(this._buildDockPage());
         window.add(this._buildAboutPage());
 
         window.set_default_size(680, 780);
+    }
+
+    // Dash to Dock keeps its schema inside its own extension directory, so it
+    // is not in the default lookup path and cannot be opened by schema id.
+    _dashToDockSettings() {
+        const dataDirs = [GLib.get_user_data_dir(), ...GLib.get_system_data_dirs()];
+
+        for (const dataDir of dataDirs) {
+            const schemaDir = GLib.build_filenamev([
+                dataDir, 'gnome-shell', 'extensions', DASH_TO_DOCK_UUID, 'schemas',
+            ]);
+            if (!GLib.file_test(schemaDir, GLib.FileTest.IS_DIR))
+                continue;
+
+            try {
+                const source = Gio.SettingsSchemaSource.new_from_directory(
+                    schemaDir, Gio.SettingsSchemaSource.get_default(), false);
+                const schema = source.lookup(DASH_TO_DOCK_SCHEMA, true);
+                if (schema)
+                    return new Gio.Settings({ settings_schema: schema });
+            } catch (e) {
+                // Unreadable or stale schema directory; try the next one.
+            }
+        }
+
+        const schema = Gio.SettingsSchemaSource.get_default()?.lookup(DASH_TO_DOCK_SCHEMA, true);
+        return schema ? new Gio.Settings({ settings_schema: schema }) : null;
+    }
+
+    _buildDockPage() {
+        const page = new Adw.PreferencesPage({ title: 'Dock', icon_name: 'view-grid-symbolic' });
+        const dock = this._dashToDockSettings();
+
+        if (!dock) {
+            const missingGroup = new Adw.PreferencesGroup({ title: 'Dash to Dock Not Found' });
+            page.add(missingGroup);
+
+            const row = new Adw.ActionRow({
+                title: 'Install the Dash to Dock extension',
+                subtitle: 'The dock is provided by Dash to Dock. Once it is installed, ' +
+                    'its position, size and visibility can be changed from here.',
+            });
+            row.set_subtitle_lines(0);
+            missingGroup.add(row);
+            return page;
+        }
+
+        const layoutGroup = new Adw.PreferencesGroup({
+            title: 'Placement',
+            description: 'These settings belong to Dash to Dock and apply immediately',
+        });
+        page.add(layoutGroup);
+
+        const positionRow = new Adw.ComboRow({
+            title: 'Screen Edge',
+            model: Gtk.StringList.new(DOCK_POSITIONS.map(([, label]) => label)),
+            selected: Math.max(0, DOCK_POSITIONS.findIndex(
+                ([value]) => value === dock.get_string('dock-position'))),
+        });
+        layoutGroup.add(positionRow);
+        positionRow.connect('notify::selected', () => {
+            dock.set_string('dock-position', DOCK_POSITIONS[positionRow.selected][0]);
+        });
+
+        const iconSizeRow = this._addScaleRow(layoutGroup, 'Icon Size', {
+            lower: 16, upper: 64, marks: [16, 24, 32, 48, 64],
+            value: dock.get_int('dash-max-icon-size'),
+            onChange: value => dock.set_int('dash-max-icon-size', value),
+        });
+        dock.connect('changed::dash-max-icon-size',
+            () => iconSizeRow.setValue(dock.get_int('dash-max-icon-size')));
+
+        const spanRow = new Adw.SwitchRow({
+            title: 'Span the Whole Edge',
+            subtitle: 'Stretch the dock across the full width or height of the display',
+            active: dock.get_boolean('extend-height'),
+        });
+        layoutGroup.add(spanRow);
+
+        // height-fraction is how much of the edge the dock may use. It only has
+        // an effect while the dock is not stretched to the full edge.
+        const lengthRow = this._addScaleRow(layoutGroup, 'Maximum Length', {
+            lower: 20, upper: 100, marks: [20, 40, 60, 80, 100], unit: '%',
+            value: Math.round(dock.get_double('height-fraction') * 100),
+            onChange: value => dock.set_double('height-fraction', value / 100),
+        });
+        lengthRow.row.set_sensitive(!spanRow.active);
+
+        spanRow.connect('notify::active', () => {
+            dock.set_boolean('extend-height', spanRow.active);
+            lengthRow.row.set_sensitive(!spanRow.active);
+        });
+
+        const visibilityGroup = new Adw.PreferencesGroup({ title: 'Visibility' });
+        page.add(visibilityGroup);
+
+        const visibilityRow = new Adw.ComboRow({
+            title: 'When to Show the Dock',
+            model: Gtk.StringList.new(DOCK_VISIBILITY.map(mode => mode.title)),
+            selected: this._currentDockVisibility(dock),
+        });
+        visibilityGroup.add(visibilityRow);
+
+        const syncVisibilitySubtitle = () => {
+            visibilityRow.set_subtitle(DOCK_VISIBILITY[visibilityRow.selected].subtitle);
+        };
+        syncVisibilitySubtitle();
+
+        visibilityRow.connect('notify::selected', () => {
+            DOCK_VISIBILITY[visibilityRow.selected].apply(dock);
+            syncVisibilitySubtitle();
+        });
+
+        this._buildDockDisplayGroup(page, dock);
+
+        return page;
+    }
+
+    _currentDockVisibility(dock) {
+        if (dock.get_boolean('dock-fixed'))
+            return 0;
+        return dock.get_boolean('intellihide') ? 1 : 2;
+    }
+
+    // Which display the dock lives on. Dash to Dock stores a connector name,
+    // so offer the connectors actually attached right now plus "primary".
+    _buildDockDisplayGroup(page, dock) {
+        const group = new Adw.PreferencesGroup({ title: 'Display' });
+        page.add(group);
+
+        const allRow = new Adw.SwitchRow({
+            title: 'Show on Every Display',
+            active: dock.get_boolean('multi-monitor'),
+        });
+        group.add(allRow);
+
+        const connectors = [];
+        const labels = ['Primary Display'];
+        const monitors = Gdk.Display.get_default()?.get_monitors();
+        for (let i = 0; i < (monitors?.get_n_items() ?? 0); i++) {
+            const monitor = monitors.get_item(i);
+            const connector = monitor.connector;
+            if (!connector)
+                continue;
+            connectors.push(connector);
+            const model = [monitor.manufacturer, monitor.model].filter(part => part).join(' ');
+            labels.push(model ? `${connector} — ${model}` : connector);
+        }
+
+        const current = dock.get_string('preferred-monitor-by-connector');
+        const currentIndex = current === 'primary' ? 0 : connectors.indexOf(current) + 1;
+
+        const displayRow = new Adw.ComboRow({
+            title: 'Place the Dock On',
+            model: Gtk.StringList.new(labels),
+            selected: Math.max(0, currentIndex),
+            sensitive: !allRow.active,
+        });
+        group.add(displayRow);
+
+        displayRow.connect('notify::selected', () => {
+            const index = displayRow.selected;
+            dock.set_string('preferred-monitor-by-connector',
+                index === 0 ? 'primary' : connectors[index - 1]);
+        });
+
+        allRow.connect('notify::active', () => {
+            dock.set_boolean('multi-monitor', allRow.active);
+            displayRow.set_sensitive(!allRow.active);
+        });
+    }
+
+    // A labelled slider in a row, matching the System Menu icon size control.
+    _addScaleRow(group, title, { lower, upper, marks, value, unit = '', onChange }) {
+        const scale = new Gtk.Scale({
+            orientation: Gtk.Orientation.HORIZONTAL,
+            adjustment: new Gtk.Adjustment({ lower, upper, step_increment: 1, page_increment: 4 }),
+            digits: 0,
+            draw_value: true,
+            hexpand: true,
+            valign: Gtk.Align.CENTER,
+        });
+        scale.set_size_request(220, -1);
+        for (const mark of marks)
+            scale.add_mark(mark, Gtk.PositionType.BOTTOM, null);
+        if (unit)
+            scale.set_format_value_func((_scale, displayed) => `${Math.round(displayed)}${unit}`);
+        scale.set_value(value);
+
+        const row = new Adw.ActionRow({ title });
+        row.add_suffix(scale);
+        group.add(row);
+
+        let updating = false;
+        scale.connect('value-changed', () => {
+            if (updating)
+                return;
+            onChange(Math.round(scale.get_value()));
+        });
+
+        return {
+            row,
+            setValue: newValue => {
+                updating = true;
+                scale.set_value(newValue);
+                updating = false;
+            },
+        };
     }
 
     _buildGeneralPage(settings, window) {
