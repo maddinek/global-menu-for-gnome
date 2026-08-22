@@ -17,6 +17,8 @@ export default class GlobalMenuExtension extends Extension {
         this._clockMoved = false;
         this._clockSessionBackup = null;
         this._powerHidden = null;
+        this._minimizedWindow = null;
+        this._minimizedId = 0;
     }
 
     enable() {
@@ -45,6 +47,14 @@ export default class GlobalMenuExtension extends Extension {
         });
 
         global.display.connectObject('notify::focus-window', () => {
+            this._syncMenuVisibility();
+        }, this);
+        global.window_manager.connectObject(
+            'minimize', () => this._syncMenuVisibility(),
+            'unminimize', () => this._syncMenuVisibility(),
+            this
+        );
+        global.workspace_manager.connectObject('active-workspace-changed', () => {
             this._syncMenuVisibility();
         }, this);
 
@@ -192,18 +202,44 @@ export default class GlobalMenuExtension extends Extension {
     _syncMenuVisibility() {
         if (!this._menuManager) return;
 
+        this._unwatchMinimized();
+
         if (this._settings.get_boolean('show-indicator')) {
             let activeWindow = global.display.get_focus_window();
+            this._watchMinimized(activeWindow);
             this._menuManager.updateMenuForWindow(activeWindow);
         } else {
             this._menuManager.clear();
         }
     }
 
+    _watchMinimized(window) {
+        this._minimizedWindow = window;
+        if (!window)
+            return;
+        this._minimizedId = window.connect('notify::minimized', () => {
+            this._syncMenuVisibility();
+        });
+    }
+
+    _unwatchMinimized() {
+        if (this._minimizedWindow && this._minimizedId) {
+            try {
+                this._minimizedWindow.disconnect(this._minimizedId);
+            } catch (e) {
+            }
+        }
+        this._minimizedWindow = null;
+        this._minimizedId = 0;
+    }
+
     disable() {
-        console.log(`[globalmenu@ShiroOSL.github.io] Disabling extension.`);
+        console.log(`[${this.metadata.uuid}] Disabling extension.`);
 
         global.display.disconnectObject(this);
+        global.window_manager.disconnectObject(this);
+        global.workspace_manager.disconnectObject(this);
+        this._unwatchMinimized();
 
         if (this._settings && this._settingsChangedId) {
             this._settings.disconnect(this._settingsChangedId);

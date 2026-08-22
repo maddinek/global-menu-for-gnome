@@ -71,7 +71,7 @@
     <key name="desktop-app-name" type="s">
       <default>"Nautilus"</default>
       <summary>Name shown for the file manager / desktop placeholder in the App menu</summary>
-      <description>Used for the App menu label and File menu items (e.g. "About X", "Open X", "New X Window") when no other app is focused.</description>
+      <description>Used for File menu items such as "New X Window" while an app is focused. The App menu no longer uses this as a fallback when every window is minimized.</description>
     </key>
 
     <key name="debug-logging" type="b">

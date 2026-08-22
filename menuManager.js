@@ -1,6 +1,7 @@
 import GObject from 'gi://GObject';
 import St from 'gi://St';
 import Clutter from 'gi://Clutter';
+import Meta from 'gi://Meta';
 import Pango from 'gi://Pango';
 import GLib from 'gi://GLib';
 import Gio from 'gi://Gio';
@@ -395,12 +396,35 @@ export class MenuManager {
         this.uuid = uuid;
         this._settings = settings;
         this._buttons = [];
-        this._blacklist = ['gjs', 'org.gnome.gjs', 'gnome-shell', 'mutter', 'nautilus', 'org.gnome.nautilus'];
+        // Shell chrome only — not the file manager. A visible Nautilus
+        // window should still get File/Edit/View like any other app.
+        this._blacklist = ['gjs', 'org.gnome.gjs', 'gnome-shell', 'mutter'];
 
         debugLoggingEnabled = settings.get_boolean('debug-logging');
         this._debugLoggingChangedId = settings.connect('changed::debug-logging', () => {
             debugLoggingEnabled = settings.get_boolean('debug-logging');
         });
+    }
+
+    // True when a normal window is actually in front, not minimized to
+    // the dock / another workspace. GNOME often keeps the last window as
+    // focus-window after minimize-all, which used to leave "Nautilus" stuck
+    // on the bar.
+    _isFrontmostWindow(window) {
+        if (!window)
+            return false;
+        try {
+            if (window.minimized)
+                return false;
+            if (typeof window.showing_on_its_workspace === 'function' &&
+                !window.showing_on_its_workspace())
+                return false;
+            if (window.get_window_type() !== Meta.WindowType.NORMAL)
+                return false;
+        } catch (e) {
+            return false;
+        }
+        return true;
     }
 
     updateMenuForWindow(window) {
@@ -409,10 +433,10 @@ export class MenuManager {
         let desktopId = "";
         let detectedApp = null;
 
-        if (window) {
+        if (this._isFrontmostWindow(window)) {
             let windowType = window.get_window_type();
 
-            if (windowType === 0) {
+            if (windowType === Meta.WindowType.NORMAL) {
                 let tracker = Shell.WindowTracker.get_default();
                 detectedApp = tracker.get_window_app(window);
 
@@ -445,38 +469,39 @@ export class MenuManager {
 
         let desktopAppName = this._settings.get_string('desktop-app-name') || 'Nautilus';
 
-        let firstMenuChildren = [];
-        if (isAppFocused) {
-            if (detectedApp) {
-                let openWindows = detectedApp.get_windows();
-                if (openWindows.length > 0) {
-                    firstMenuChildren.push({ type: "section-header", label: "Open Windows" });
-                    openWindows.forEach(win => {
-                        firstMenuChildren.push({
-                            label: win.get_title() || appName,
-                            action: `activate-window:${win.get_id()}`
-                        });
-                    });
-                    firstMenuChildren.push({ type: "separator" });
-                }
-            }
-            firstMenuChildren.push(
-                { label: "New Window", action: "new-app-window" },
-                { type: "separator" },
-                { label: "App Details", action: `app-details:${desktopId}` },
-                { type: "separator" },
-                { label: `Quit ${appName}`, action: "close" }
-            );
-        } else {
-            firstMenuChildren = [
-                { label: `About ${desktopAppName}`, enabled: false },
-                { type: "separator" },
-                { label: `Open ${desktopAppName}`, action: "open-file-manager" },
-                { label: "Settings", action: "open-settings" },
-                { type: "separator" },
-                { label: "Empty Bin...", action: "empty-bin" }
-            ];
+        // Nothing in front: keep the System Menu (pear) and any custom
+        // menus, but do not pretend Nautilus/Finder is the focused app.
+        if (!isAppFocused) {
+            this.clear();
+            this._buildCustomMenus().forEach((item, index) => {
+                let btn = new TopLevelMenuButton(item.label, item.children, null, false);
+                Main.panel.addToStatusArea(`${this.uuid}-${index}`, btn, index + 1, 'left');
+                this._buttons.push(btn);
+            });
+            return;
         }
+
+        let firstMenuChildren = [];
+        if (detectedApp) {
+            let openWindows = detectedApp.get_windows();
+            if (openWindows.length > 0) {
+                firstMenuChildren.push({ type: "section-header", label: "Open Windows" });
+                openWindows.forEach(win => {
+                    firstMenuChildren.push({
+                        label: win.get_title() || appName,
+                        action: `activate-window:${win.get_id()}`
+                    });
+                });
+                firstMenuChildren.push({ type: "separator" });
+            }
+        }
+        firstMenuChildren.push(
+            { label: "New Window", action: "new-app-window" },
+            { type: "separator" },
+            { label: "App Details", action: `app-details:${desktopId}` },
+            { type: "separator" },
+            { label: `Quit ${appName}`, action: "close" }
+        );
 
         const fileMenu = {
             type: "submenu",
