@@ -7,14 +7,18 @@ REPO_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
 
 SSH_HOST="${BLUEFIN_SSH:-vm-bluefin}"
 SSH_OPTS=(-o BatchMode=yes -o StrictHostKeyChecking=no)
+
 if [[ "$SSH_HOST" == *"@"* ]]; then
     SSH_TARGET="$SSH_HOST"
+elif [[ "$SSH_HOST" != "127.0.0.1" && "$SSH_HOST" != *"."* ]]; then
+    # Use ~/.ssh/config Host alias (e.g. vm-bluefin)
+    SSH_TARGET="$SSH_HOST"
 else
-  SSH_KEY="${BLUEFIN_SSH_KEY:-$HOME/.ssh/vm-key}"
-  SSH_PORT="${BLUEFIN_SSH_PORT:-2223}"
-  SSH_USER="${BLUEFIN_SSH_USER:-martin}"
-  SSH_TARGET="${SSH_USER}@127.0.0.1"
-  SSH_OPTS+=(-i "$SSH_KEY" -p "$SSH_PORT")
+    SSH_KEY="${BLUEFIN_SSH_KEY:-$HOME/.ssh/vm-key}"
+    SSH_PORT="${BLUEFIN_SSH_PORT:-2223}"
+    SSH_USER="${BLUEFIN_SSH_USER:-martin}"
+    SSH_TARGET="${SSH_USER}@127.0.0.1"
+    SSH_OPTS+=(-i "$SSH_KEY" -p "$SSH_PORT")
 fi
 
 REMOTE_DIR="${BLUEFIN_REMOTE_DIR:-~/global-menu-for-gnome}"
