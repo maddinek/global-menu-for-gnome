@@ -20,7 +20,7 @@ export default class GlobalMenuExtension extends Extension {
     }
 
     enable() {
-        console.log(`[globalmenu@ShiroOSL.github.io] Enabling extension.`);
+        console.log(`[${this.metadata.uuid}] Enabling extension.`);
 
         this._settings = this.getSettings();
 
@@ -163,6 +163,10 @@ export default class GlobalMenuExtension extends Extension {
         let shouldShow = this._settings.get_boolean('show-logo-menu');
 
         if (shouldShow && !this._logoButton) {
+            // A previous failed enable() can leave this role occupied.
+            let existing = Main.panel.statusArea['globalmenu-logo'];
+            if (existing)
+                existing.destroy();
             this._logoButton = new SystemMenuButton(this._settings, this.path);
             Main.panel.addToStatusArea('globalmenu-logo', this._logoButton, 0, 'left');
         } else if (!shouldShow && this._logoButton) {

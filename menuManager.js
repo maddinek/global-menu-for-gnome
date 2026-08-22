@@ -46,20 +46,21 @@ const TopLevelMenuButton = GObject.registerClass(
       if (isAppMenu)
           this.add_style_class_name('globalmenu-app-menu');
 
-      // GNOME 50 PanelMenu.Button does not always expose `.label`.
-      // Create one when missing, and never ellipsize when it exists.
+      // GNOME 50 PanelMenu.Button has no `.label` at all. Keep a local
+      // handle so we never touch `.clutter_text` on undefined.
+      const titleLabel = this.label ?? new St.Label({
+          text: label,
+          y_align: Clutter.ActorAlign.CENTER,
+          style_class: 'panel-button-label',
+      });
       if (!this.label) {
-          this.label = new St.Label({
-              text: label,
-              y_align: Clutter.ActorAlign.CENTER,
-              style_class: 'panel-button-label',
-          });
-          this.add_child(this.label);
+          this.label = titleLabel;
+          this.add_child(titleLabel);
       }
-      if (this.label.clutter_text)
-          this.label.clutter_text.ellipsize = Pango.EllipsizeMode.NONE;
-      this.label.add_style_class_name('panel-button-label');
-      this.label.set_style('max-width: none;');
+      if (titleLabel.clutter_text)
+          titleLabel.clutter_text.ellipsize = Pango.EllipsizeMode.NONE;
+      titleLabel.add_style_class_name('panel-button-label');
+      titleLabel.set_style('max-width: none;');
       this.x_expand = false;
 
       this._buildSubMenu(children, this.menu);
