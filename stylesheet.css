@@ -28,10 +28,11 @@
   icon-size: 14px;
 }
 
-/* Clock at far right; status icons sit to its left (GNOME default order) */
+/* Clock is reparented to the far right in extension.js.
+   Status icons (volume, network, …) sit immediately to its left. */
 #panel.globalmenu-macos-panel #clock {
   margin-left: 6px;
-  padding-right: 4px;
+  padding-right: 8px;
 }
 
 #panel.globalmenu-macos-panel .clock-display {

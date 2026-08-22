@@ -14,6 +14,8 @@ export default class GlobalMenuExtension extends Extension {
         this._logoButton = null;
         this._overviewHidden = false;
         this._stylesheet = null;
+        this._clockMoved = false;
+        this._clockSessionBackup = null;
     }
 
     enable() {
@@ -47,10 +49,76 @@ export default class GlobalMenuExtension extends Extension {
 
         this._loadStylesheet();
         Main.panel.add_style_class_name('globalmenu-macos-panel');
+        this._moveClockToRight();
 
         this._syncLogoButton();
         this._syncOverviewButton();
         this._syncMenuVisibility();
+    }
+
+    // GNOME 42+ puts the clock in the center. macOS has it on the far
+    // right, with speaker/network/etc immediately to its left.
+    // Must update sessionMode.panel then _updatePanel(), otherwise Shell
+    // restores the centered dateMenu on the next layout pass.
+    _moveClockToRight() {
+        let layout = Main.sessionMode?.panel;
+        if (!layout) {
+            this._moveClockFallback();
+            return;
+        }
+
+        this._clockSessionBackup = {
+            left: layout.left.slice(),
+            center: layout.center.slice(),
+            right: layout.right.slice(),
+        };
+
+        layout.center = layout.center.filter(item => item !== 'dateMenu');
+        layout.right = layout.right.filter(item => item !== 'dateMenu');
+        layout.right.push('dateMenu');
+        Main.panel._updatePanel();
+        this._clockMoved = true;
+        console.log(`[globalmenu] Clock moved to right. panel.right=${layout.right.join(',')}`);
+    }
+
+    _moveClockFallback() {
+        let dateMenu = Main.panel.statusArea.dateMenu;
+        if (!dateMenu?.container)
+            return;
+
+        let container = dateMenu.container;
+        let parent = container.get_parent();
+        if (!parent)
+            return;
+
+        parent.remove_child(container);
+        Main.panel._rightBox.add_child(container);
+        this._clockMoved = true;
+    }
+
+    _restoreClock() {
+        if (!this._clockMoved)
+            return;
+
+        let layout = Main.sessionMode?.panel;
+        if (layout && this._clockSessionBackup) {
+            layout.left = this._clockSessionBackup.left.slice();
+            layout.center = this._clockSessionBackup.center.slice();
+            layout.right = this._clockSessionBackup.right.slice();
+            Main.panel._updatePanel();
+        } else {
+            let dateMenu = Main.panel.statusArea.dateMenu;
+            let container = dateMenu?.container;
+            if (container) {
+                let parent = container.get_parent();
+                if (parent)
+                    parent.remove_child(container);
+                Main.panel._centerBox.add_child(container);
+            }
+        }
+
+        this._clockMoved = false;
+        this._clockSessionBackup = null;
     }
 
     _loadStylesheet() {
@@ -132,6 +200,7 @@ export default class GlobalMenuExtension extends Extension {
             this._overviewHidden = false;
         }
 
+        this._restoreClock();
         Main.panel.remove_style_class_name('globalmenu-macos-panel');
         this._unloadStylesheet();
 

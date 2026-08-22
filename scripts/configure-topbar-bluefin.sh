@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# macOS-like top bar: blur panel, centered clock, global menu polish.
+# macOS-like top bar: blur panel, clock on the far right, global menu polish.
 set -euo pipefail
 
 SSH_HOST="${BLUEFIN_SSH:-vm-bluefin}"
