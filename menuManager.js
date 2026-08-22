@@ -1,6 +1,7 @@
 import GObject from 'gi://GObject';
 import St from 'gi://St';
 import Clutter from 'gi://Clutter';
+import Pango from 'gi://Pango';
 import GLib from 'gi://GLib';
 import Gio from 'gi://Gio';
 import Shell from 'gi://Shell';
@@ -41,13 +42,13 @@ const TopLevelMenuButton = GObject.registerClass(
       this._appInstance = appInstance;
       this._timeoutIds = [];
 
-      let title = new St.Label({
-          text: label,
-          y_align: Clutter.ActorAlign.CENTER,
-          style_class: 'panel-button-label'
-      });
-      this.add_child(title);
-      
+      // PanelMenu.Button sets END ellipsize on its label, which truncates
+      // names like "Firefox" and "Window" when the left panel is tight.
+      this.label.clutter_text.ellipsize = Pango.EllipsizeMode.NONE;
+      this.label.add_style_class_name('panel-button-label');
+      this.label.set_style('max-width: none;');
+      this.x_expand = false;
+
       this._buildSubMenu(children, this.menu);
 
       if (this.menu) {
