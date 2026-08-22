@@ -42,6 +42,7 @@ export const SystemMenuButton = GObject.registerClass(
     _init(settings, extensionPath) {
         super._init(0.5, 'System Menu');
 
+        this.add_style_class_name('globalmenu-system-menu');
         this._settings = settings;
         this._extensionPath = extensionPath;
         this._systemActions = SystemActions.getDefault();

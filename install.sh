@@ -16,6 +16,7 @@ echo "📄 Copying extension files..."
 # Copy every .js file and the schemas/ directory automatically, so newly
 # added source files are never silently left out of the installed copy.
 cp -v "$SOURCE_DIR"/*.js "$EXTENSION_DIR/"
+cp -v "$SOURCE_DIR"/*.css "$EXTENSION_DIR/" 2>/dev/null || true
 cp -v "$SOURCE_DIR/metadata.json" "$EXTENSION_DIR/"
 cp -rv "$SOURCE_DIR/schemas" "$EXTENSION_DIR/"
 cp -rv "$SOURCE_DIR/icons" "$EXTENSION_DIR/"

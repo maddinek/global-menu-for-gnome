@@ -37,10 +37,14 @@ function spawnCommand(argv) {
 
 const TopLevelMenuButton = GObject.registerClass(
   class TopLevelMenuButton extends PanelMenu.Button {
-    _init(label, children, appInstance = null) {
+    _init(label, children, appInstance = null, isAppMenu = false) {
       super._init(0.5, label);
       this._appInstance = appInstance;
       this._timeoutIds = [];
+
+      this.add_style_class_name('globalmenu-menu-button');
+      if (isAppMenu)
+          this.add_style_class_name('globalmenu-app-menu');
 
       // PanelMenu.Button sets END ellipsize on its label, which truncates
       // names like "Firefox" and "Window" when the left panel is tight.
@@ -566,7 +570,8 @@ export class MenuManager {
         this.clear();
 
         menuData.forEach((item, index) => {
-            let btn = new TopLevelMenuButton(item.label, item.children, detectedApp);
+            let isAppMenu = this._settings.get_boolean('menu-app-enabled') && index === 0;
+            let btn = new TopLevelMenuButton(item.label, item.children, detectedApp, isAppMenu);
             Main.panel.addToStatusArea(`${this.uuid}-${index}`, btn, index + 1, 'left');
             this._buttons.push(btn);
         });

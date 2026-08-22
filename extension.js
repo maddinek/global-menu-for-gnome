@@ -1,3 +1,5 @@
+import Gio from 'gi://Gio';
+import St from 'gi://St';
 import { Extension } from 'resource:///org/gnome/shell/extensions/extension.js';
 import * as Main from "resource:///org/gnome/shell/ui/main.js";
 import { MenuManager } from './menuManager.js';
@@ -11,6 +13,7 @@ export default class GlobalMenuExtension extends Extension {
         this._settingsChangedId = null;
         this._logoButton = null;
         this._overviewHidden = false;
+        this._stylesheet = null;
     }
 
     enable() {
@@ -42,9 +45,28 @@ export default class GlobalMenuExtension extends Extension {
             this._syncMenuVisibility();
         }, this);
 
+        this._loadStylesheet();
+        Main.panel.add_style_class_name('globalmenu-macos-panel');
+
         this._syncLogoButton();
         this._syncOverviewButton();
         this._syncMenuVisibility();
+    }
+
+    _loadStylesheet() {
+        let cssFile = Gio.File.new_for_path(`${this.path}/stylesheet.css`);
+        if (!cssFile.query_exists(null))
+            return;
+        let themeContext = St.ThemeContext.get_for_stage(global.stage);
+        this._stylesheet = themeContext.get_theme().load_stylesheet(cssFile);
+    }
+
+    _unloadStylesheet() {
+        if (!this._stylesheet)
+            return;
+        let themeContext = St.ThemeContext.get_for_stage(global.stage);
+        themeContext.get_theme().unload_stylesheet(this._stylesheet);
+        this._stylesheet = null;
     }
 
     _syncLogoButton() {
@@ -109,6 +131,9 @@ export default class GlobalMenuExtension extends Extension {
             if (activities) activities.show();
             this._overviewHidden = false;
         }
+
+        Main.panel.remove_style_class_name('globalmenu-macos-panel');
+        this._unloadStylesheet();
 
         this._settings = null;
     }

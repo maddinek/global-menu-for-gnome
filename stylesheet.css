@@ -1,0 +1,50 @@
+/* macOS-inspired menu bar styling for Global Menu for GNOME */
+
+#panel.globalmenu-macos-panel {
+  font-size: 13px;
+  font-weight: 400;
+  position: relative;
+}
+
+/* Menu titles: File, Edit, View, … */
+#panel.globalmenu-macos-panel .globalmenu-menu-button {
+  padding: 0 10px;
+}
+
+#panel.globalmenu-macos-panel .globalmenu-menu-button .panel-button-label {
+  font-size: 13px;
+}
+
+/* Active app name (Firefox, Cursor, …) — bold like macOS */
+#panel.globalmenu-macos-panel .globalmenu-app-menu .panel-button-label {
+  font-weight: 600;
+}
+
+/* Pear / system menu button */
+#panel.globalmenu-macos-panel .globalmenu-system-menu {
+  padding: 0 4px 0 8px;
+}
+
+#panel.globalmenu-macos-panel .globalmenu-logo-icon {
+  icon-size: 14px;
+}
+
+/* Center clock in the bar */
+#panel.globalmenu-macos-panel #clock {
+  position: absolute;
+  left: 50%;
+  top: 0;
+  height: 100%;
+  transform: translateX(-50%);
+  z-index: 1;
+}
+
+#panel.globalmenu-macos-panel .clock-display {
+  font-size: 13px;
+  font-weight: 500;
+}
+
+/* Slightly tighter default panel buttons */
+#panel.globalmenu-macos-panel .panel-button {
+  -natural-hpadding: 8px;
+}
