@@ -1,11 +1,12 @@
 #!/usr/bin/env bash
-# Configure Dash to Dock for macOS-like always-visible bottom dock on Bluefin.
+# Configure Dash to Dock for macOS-like always-visible dock on Bluefin.
 # This is separate from global-menu-for-gnome — dash-to-dock is a system extension.
 set -euo pipefail
 
 SSH_HOST="${BLUEFIN_SSH:-vm-bluefin}"
-ICON_SIZE="${DOCK_ICON_SIZE:-36}"   # 75% of default 48px
-MONITOR="${DOCK_MONITOR:-primary}"  # connector name or 'primary'
+ICON_SIZE="${DOCK_ICON_SIZE:-36}"       # 75% of default 48px
+MONITOR="${DOCK_MONITOR:-primary}"      # connector name or 'primary'
+DOCK_POSITION="${DOCK_POSITION:-RIGHT}" # TOP, RIGHT, BOTTOM, or LEFT
 
 if [[ "$SSH_HOST" == *"@"* ]]; then
     SSH_TARGET="$SSH_HOST"
@@ -22,17 +23,18 @@ else
 fi
 
 echo "==> Configuring Dash to Dock on ${SSH_TARGET}"
-echo "    icon size: ${ICON_SIZE}px, monitor: ${MONITOR}"
+echo "    position: ${DOCK_POSITION}, icon size: ${ICON_SIZE}px, monitor: ${MONITOR}"
 
-ssh "${SSH_OPTS[@]}" "$SSH_TARGET" bash -s -- "$ICON_SIZE" "$MONITOR" <<'REMOTE'
+ssh "${SSH_OPTS[@]}" "$SSH_TARGET" bash -s -- "$ICON_SIZE" "$MONITOR" "$DOCK_POSITION" <<'REMOTE'
 set -euo pipefail
 ICON_SIZE="$1"
 MONITOR="$2"
+POSITION="$3"
 export DBUS_SESSION_BUS_ADDRESS="unix:path=/run/user/$(id -u)/bus"
 export GSETTINGS_SCHEMA_DIR="/usr/share/gnome-shell/extensions/dash-to-dock@micxgx.gmail.com/schemas"
 SCHEMA=org.gnome.shell.extensions.dash-to-dock
 
-gsettings set "$SCHEMA" dock-position 'BOTTOM'
+gsettings set "$SCHEMA" dock-position "$POSITION"
 gsettings set "$SCHEMA" autohide false
 gsettings set "$SCHEMA" dock-fixed true
 gsettings set "$SCHEMA" intellihide false
@@ -45,4 +47,4 @@ echo "Dash to Dock settings:"
 gsettings list-recursively "$SCHEMA" | grep -E 'autohide|dock-fixed|intellihide|dash-max-icon|dock-position|preferred-monitor|extend-height'
 REMOTE
 
-echo "==> Done. Dock should stay visible at the bottom of the ${MONITOR} display."
+echo "==> Done. Dock should stay visible on the ${DOCK_POSITION} edge of the ${MONITOR} display."
