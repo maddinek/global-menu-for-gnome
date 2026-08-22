@@ -5,13 +5,16 @@
 }
 
 #panel .panel-button.clock-display {
-  margin-left: 0;
-  padding-left: 2px;
-  padding-right: 6px;
+  -natural-hpadding: 2px;
+  -minimum-hpadding: 0px;
+  margin: 0;
+  padding: 0 4px 0 0;
+  border: none;
 }
 
 #panel .panel-button.clock-display .clock {
   padding: 0 2px;
+  margin: 0;
 }
 
 #panel .panel-status-indicators-box {
@@ -19,8 +22,8 @@
 }
 
 #panel .system-status-icon {
-  padding: 0 3px;
-  margin: 0;
+  padding: 0 2px;
+  margin: 0 1px;
 }
 
 #panel .power-status {
