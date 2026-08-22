@@ -6,6 +6,7 @@ import GLib from 'gi://GLib';
 import { ExtensionPreferences } from 'resource:///org/gnome/Shell/Extensions/js/extensions/prefs.js';
 
 const DISTRO_ICONS = [
+    ['pear', 'Bitten Pear'],
     ['apple', 'Apple'],
     ['fedora', 'Fedora'],
     ['debian', 'Debian'],

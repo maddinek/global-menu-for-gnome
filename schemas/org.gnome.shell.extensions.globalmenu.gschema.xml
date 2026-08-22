@@ -29,8 +29,8 @@
       <description>Highest priority: when non-empty, overrides everything else.</description>
     </key>
     <key name="logo-distro-icon" type="s">
-      <default>""</default>
-      <summary>Bundled distro icon stem (e.g. "fedora", "arch"), empty for none</summary>
+      <default>"pear"</default>
+      <summary>Bundled distro icon stem (e.g. "pear", "fedora", "arch"), empty for none</summary>
     </key>
     <key name="logo-distro-icon-symbolic" type="b">
       <default>true</default>
