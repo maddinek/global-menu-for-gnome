@@ -46,9 +46,18 @@ const TopLevelMenuButton = GObject.registerClass(
       if (isAppMenu)
           this.add_style_class_name('globalmenu-app-menu');
 
-      // PanelMenu.Button sets END ellipsize on its label, which truncates
-      // names like "Firefox" and "Window" when the left panel is tight.
-      this.label.clutter_text.ellipsize = Pango.EllipsizeMode.NONE;
+      // GNOME 50 PanelMenu.Button does not always expose `.label`.
+      // Create one when missing, and never ellipsize when it exists.
+      if (!this.label) {
+          this.label = new St.Label({
+              text: label,
+              y_align: Clutter.ActorAlign.CENTER,
+              style_class: 'panel-button-label',
+          });
+          this.add_child(this.label);
+      }
+      if (this.label.clutter_text)
+          this.label.clutter_text.ellipsize = Pango.EllipsizeMode.NONE;
       this.label.add_style_class_name('panel-button-label');
       this.label.set_style('max-width: none;');
       this.x_expand = false;
