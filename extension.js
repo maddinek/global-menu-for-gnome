@@ -16,6 +16,7 @@ export default class GlobalMenuExtension extends Extension {
         this._stylesheet = null;
         this._clockMoved = false;
         this._clockSessionBackup = null;
+        this._powerHidden = null;
     }
 
     enable() {
@@ -50,6 +51,7 @@ export default class GlobalMenuExtension extends Extension {
         this._loadStylesheet();
         Main.panel.add_style_class_name('globalmenu-macos-panel');
         this._moveClockToRight();
+        this._hidePowerButton();
 
         this._syncLogoButton();
         this._syncOverviewButton();
@@ -79,6 +81,26 @@ export default class GlobalMenuExtension extends Extension {
         Main.panel._updatePanel();
         this._clockMoved = true;
         console.log(`[globalmenu] Clock moved to right. panel.right=${layout.right.join(',')}`);
+    }
+
+    _hidePowerButton() {
+        let qs = Main.panel.statusArea.quickSettings;
+        let power = qs?._system || qs?._indicators?._system;
+        if (!power && qs?._indicators?.get_children) {
+            let children = qs._indicators.get_children();
+            if (children.length)
+                power = children[children.length - 1];
+        }
+        if (!power)
+            return;
+        power.hide();
+        this._powerHidden = power;
+    }
+
+    _showPowerButton() {
+        if (this._powerHidden)
+            this._powerHidden.show();
+        this._powerHidden = null;
     }
 
     _moveClockFallback() {
@@ -201,6 +223,7 @@ export default class GlobalMenuExtension extends Extension {
         }
 
         this._restoreClock();
+        this._showPowerButton();
         Main.panel.remove_style_class_name('globalmenu-macos-panel');
         this._unloadStylesheet();
 

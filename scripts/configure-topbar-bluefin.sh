@@ -42,6 +42,11 @@ gsettings set "$BLUR" override-background true
 gsettings set org.gnome.desktop.interface clock-show-weekday true
 gsettings set org.gnome.desktop.interface clock-show-seconds false
 
+# Spotlight replacement (Search Light) in the menu bar
+export GSETTINGS_SCHEMA_DIR="/usr/share/gnome-shell/extensions/search-light@icedman.github.com/schemas"
+gsettings set org.gnome.shell.extensions.search-light show-panel-icon true
+gnome-extensions enable search-light@icedman.github.com 2>/dev/null || true
+
 # Global menu housekeeping
 export GSETTINGS_SCHEMA_DIR="$HOME/.local/share/gnome-shell/extensions/globalmenu@ShiroOSL.github.io/schemas"
 gsettings set org.gnome.shell.extensions.globalmenu debug-logging false

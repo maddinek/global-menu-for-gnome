@@ -29,10 +29,11 @@
 }
 
 /* Clock is reparented to the far right in extension.js.
-   Status icons (volume, network, …) sit immediately to its left. */
-#panel.globalmenu-macos-panel #clock {
-  margin-left: 6px;
-  padding-right: 8px;
+   Status icons sit immediately to its left — keep this tight. */
+#panel.globalmenu-macos-panel .panel-button.clock-display {
+  margin-left: 0;
+  padding-left: 2px;
+  padding-right: 6px;
 }
 
 #panel.globalmenu-macos-panel .clock-display {
@@ -40,7 +41,29 @@
   font-weight: 500;
 }
 
+#panel.globalmenu-macos-panel .clock-display .clock {
+  padding: 0 2px;
+}
+
+#panel.globalmenu-macos-panel .panel-status-indicators-box {
+  spacing: 2px;
+}
+
+#panel.globalmenu-macos-panel .system-status-icon {
+  padding: 0 3px;
+  margin: 0;
+}
+
+#panel.globalmenu-macos-panel .power-status {
+  width: 0;
+  height: 0;
+  min-width: 0;
+  padding: 0;
+  margin: 0;
+}
+
 /* Slightly tighter default panel buttons */
 #panel.globalmenu-macos-panel .panel-button {
-  -natural-hpadding: 8px;
+  -natural-hpadding: 4px;
+  -minimum-hpadding: 2px;
 }

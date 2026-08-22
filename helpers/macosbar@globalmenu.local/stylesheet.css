@@ -1,0 +1,32 @@
+/* Tighter right-cluster: status icons sit closer to the clock */
+#panel .panel-button {
+  -natural-hpadding: 4px;
+  -minimum-hpadding: 2px;
+}
+
+#panel .panel-button.clock-display {
+  margin-left: 0;
+  padding-left: 2px;
+  padding-right: 6px;
+}
+
+#panel .panel-button.clock-display .clock {
+  padding: 0 2px;
+}
+
+#panel .panel-status-indicators-box {
+  spacing: 2px;
+}
+
+#panel .system-status-icon {
+  padding: 0 3px;
+  margin: 0;
+}
+
+#panel .power-status {
+  width: 0;
+  height: 0;
+  min-width: 0;
+  padding: 0;
+  margin: 0;
+}
