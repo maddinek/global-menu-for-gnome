@@ -44,11 +44,18 @@ gsettings set "$SCHEMA" extend-height false
 gsettings set "$SCHEMA" dash-max-icon-size "$ICON_SIZE"
 gsettings set "$SCHEMA" height-fraction "$HEIGHT_FRACTION"
 gsettings set "$SCHEMA" custom-theme-shrink true
+gsettings set "$SCHEMA" show-mounts false
 gsettings set "$SCHEMA" preferred-monitor-by-connector "$MONITOR"
 gsettings set "$SCHEMA" multi-monitor false
 
+# Pinned dock apps (GNOME favorites) — macOS-style daily drivers
+FAVORITES="['org.mozilla.firefox.desktop', 'org.gnome.Nautilus.desktop', 'cursor.desktop', 'net.cozic.joplin_desktop.desktop', 'io.github.kolunmi.Bazaar.desktop', 'org.gnome.Ptyxis.desktop']"
+gsettings set org.gnome.shell favorite-apps "$FAVORITES"
+
 echo "Dash to Dock settings:"
-gsettings list-recursively "$SCHEMA" | grep -E 'autohide|dock-fixed|intellihide|dash-max-icon|height-fraction|custom-theme-shrink|dock-position|preferred-monitor|extend-height'
+gsettings list-recursively "$SCHEMA" | grep -E 'autohide|dock-fixed|intellihide|dash-max-icon|height-fraction|custom-theme-shrink|show-mounts|dock-position|preferred-monitor|extend-height'
+echo "Pinned favorites:"
+gsettings get org.gnome.shell favorite-apps
 REMOTE
 
 echo "==> Done. Dock should stay visible on the ${DOCK_POSITION} edge of the ${MONITOR} display."
